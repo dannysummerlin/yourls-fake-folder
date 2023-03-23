@@ -10,6 +10,7 @@ Author: Danny Summerlin
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
 // move this to find pattern to use in URLs themselves to gather fake folders
 $fakeFolders = array(
+	'reports',
 	'forms',
 	'alumni',
 	'cm'
