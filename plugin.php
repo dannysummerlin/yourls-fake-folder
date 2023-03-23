@@ -8,28 +8,41 @@ Author: Danny Summerlin
 */
 
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
+
+// add underscore support
+yourls_add_filter( 'get_shorturl_charset', 'addUnderscore' );
+function addUnderscore($in) {
+	return $in.'_';
+}
+
+
+function getFakeFolders() {
 // move this to find pattern to use in URLs themselves to gather fake folders
-$fakeFolders = array(
-	'reports',
-	'forms',
-	'alumni',
-	'cm'
-);
+	return array(
+		'reports',
+		'forms',
+		'alumni',
+		'cm'
+	);
+}
 yourls_add_action('loader_failed','checkForFakeFolder');
 function checkForFakeFolder($args) {
-	if( preg_match('!^'. implode($fakeFolders,"|") .'(.*)!', $args[0], $matches) ){
+	if( preg_match('!^'. implode('|',getFakeFolders()) .'(.*)!', $args[0], $matches) ){
 		define('FOLDER_PREFIX', $matches[0]);
-		$keyword = substr(yourls_sanitize_keyword( $matches[1] ), 1); // The new keyword, sub trigger
-		yourls_add_filter('redirect_location', 'executeRedirect'); // Add our ad-forwarding function
-		include( YOURLS_ABSPATH.'/yourls-go.php' ); // Retry forwarding
+		$keyword = substr(yourls_sanitize_keyword( $matches[1] ), 1);
+		yourls_add_filter('redirect_location', 'useFakeFolder');
+		include( YOURLS_ABSPATH.'/yourls-go.php' );
 		exit;
 	}
 }
-function executeRedirect($url, $code) {
+function useFakeFolder($url, $code) {
+	if(defined('FOLDER_PROCESSED'))
+		return '/'; // not working right right now
 	$currentLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 	$pieces = explode('/', $currentLink);
 	$shortcode = array_pop($pieces);
 	if(in_array($shortcode, [null,'']))
 		$shortcode = array_pop($pieces);
-	return '//' . $_SERVER['SERVER_NAME'] . "/${FOLDER_PREFIX}-$shortcode";
+	define('FOLDER_PROCESSED', true);
+	return '//' . $_SERVER['SERVER_NAME'] . '/'.FOLDER_PREFIX."-$shortcode";
 }
