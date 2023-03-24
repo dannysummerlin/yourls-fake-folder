@@ -9,40 +9,21 @@ Author: Danny Summerlin
 
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
 
-// add underscore support
-yourls_add_filter( 'get_shorturl_charset', 'addUnderscore' );
-function addUnderscore($in) {
-	return $in.'_';
-}
+define('FAKE_FOLDER_PATTERN','/\/([\w-]+)$/');
+yourls_add_filter( 'get_shorturl_charset', 'fakeFolder_addUnderscore' );
+function fakeFolder_addUnderscore($in) { return $in.'_'; }
 
-
-function getFakeFolders() {
-// move this to find pattern to use in URLs themselves to gather fake folders
-	return array(
-		'reports',
-		'forms',
-		'alumni',
-		'cm'
-	);
-}
-yourls_add_action('loader_failed','checkForFakeFolder');
-function checkForFakeFolder($args) {
-	if( preg_match('!^'. implode('|',getFakeFolders()) .'(.*)!', $args[0], $matches) ){
-		define('FOLDER_PREFIX', $matches[0]);
-		$keyword = substr(yourls_sanitize_keyword( $matches[1] ), 1);
-		yourls_add_filter('redirect_location', 'useFakeFolder');
+yourls_add_action('loader_failed','fakeFolder_checkForFakeFolder');
+function fakeFolder_checkForFakeFolder($args) {
+	if(preg_match(FAKE_FOLDER_PATTERN,$args[0])) {
+		yourls_add_filter('redirect_location', 'fakeFolder_useFakeFolder');
 		include( YOURLS_ABSPATH.'/yourls-go.php' );
 		exit;
 	}
 }
-function useFakeFolder($url, $code) {
-	if(defined('FOLDER_PROCESSED'))
-		return '/'; // not working right right now
+function fakeFolder_useFakeFolder($url, $statusCode) {
 	$currentLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-	$pieces = explode('/', $currentLink);
-	$shortcode = array_pop($pieces);
-	if(in_array($shortcode, [null,'']))
-		$shortcode = array_pop($pieces);
-	define('FOLDER_PROCESSED', true);
-	return '//' . $_SERVER['SERVER_NAME'] . '/'.FOLDER_PREFIX."-$shortcode";
+	if($currentLink[-1] == '/')
+		$currentLink = substr($currentLink, 0, -1);
+	return preg_replace('/\/([\w-]+)$/',"_$1",$currentLink);
 }
