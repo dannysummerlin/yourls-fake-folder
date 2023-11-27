@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Fake Folders
-Plugin URI: https://github.com/jstartorg/yourls-fake-folders
-Description: A Yourls plugin that allows you to fake having named links in folders (ie https://sh.ort/help/git where "help" is not a real folder)
+Plugin URI: https://github.com/dannysummerlin/yourls-fake-folders
+Description: Converts forward slashes (/) into underscores (_) to match public URLs that look like folders to Short URLs with underscores (eg https://sh.ort/event/invite maps to a Short URL of event_invite)
 Version: 1.0
 Author: Danny Summerlin
 */
